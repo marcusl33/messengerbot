@@ -21,7 +21,7 @@ bot.on('message', (payload, reply) => {
       var attachment = payload.message.attachments
       let text = attachment[0]['payload']['url'] 
 
-      // call api call with sender and url
+      //send api call to other service with sender and url
       
 
       bot.getProfile(payload.sender.id, (err, profile) => {
@@ -53,4 +53,4 @@ bot.on('message', (payload, reply) => {
   }
 })
 
-http.createServer(bot.middleware()).listen(3000)
+http.createServer(bot.middleware()).listen(8000)

@@ -48,32 +48,56 @@ bot.on('message', (payload, reply) => {
   if ('text' in payload.message) {
     let text = "Hi!"
     //send API call to other service with text and sender
-    // var testlist = [{'Item' : 'tomatoes', 'Price' : 3.00}, {'Item' : 'chicken', 'Price' : 7.00}]
+    // var testlist = [{'Item' : 'tomatoes', 'Price' : 3.00, 'Assignee' : 'john'}, {'Item' : 'chicken', 'Price' : 7.00, 'Assignee' : 'bill'}, {'Item' : 'salmon', 'Price' : 11.00, 'Assignee' : 'case'},
+    // {'Item' : 'pesto', 'Price' : 5.50, 'Assignee' : 'bill'}]
+
+
     // var testjson = JSON.stringify(testlist)
-    // console.log(testlist)
+    // console.log(testjson)
+    // // console.log(testlist)
+    // putBillDynamo(sender, testjson, function(data) {
+    //   console.log(data);
+    // }
+
     getBillDynamo(sender, function(data) {
-      console.log(data)
       var setSource = function(callback) {
         if (data == "{}") {
           text = "Don't have an existing bill? Send a photo to start splitting a bill!"
         } else {
           let priceItemData = JSON.parse(data)
           let index = priceItemData['Item']['listIndex']
-          let priceItemList = JSON.parse(priceItemData['Item']['list'])
+          console.log(index)
+
+          let priceItemList = JSON.parse(priceItemData['Item']['itemList'])
 
           if (index >= priceItemList.length) {
+            console.log(sender)
             deleteBillDynamo(sender, function(data) {
 
             })
-            text = "Want to add tip percentage?"
+            text = getSummary(priceItemList).toString()
 
           } else {
             let itemName = priceItemList[index]["Item"]
             let price = priceItemList[index]["Price"]
-            text = "Who do you want to assign " + itemName + " of price $" + price + "?"
+            priceItemList[index] = {"Item" : itemName, "Price" : price, "Assignee" : payload.message['text']}
+
+            updateListDynamo(sender, JSON.stringify(priceItemList), function(data) {
+              //do nothing
+            })
+            
             incrementBillDynamo(sender, function(data) {
               //do nothing
-            })  
+            })
+
+            index = index + 1
+            if (index < priceItemList.length) {
+              let nextItemName = priceItemList[index]["Item"]
+              let nextPrice = priceItemList[index]["Price"]
+              text = "Who do you want to assign " + itemName + " of price $" + price + "?"
+            } else {
+              text = JSON.stringify(getSummary(priceItemList))
+            }
           }   
         }
         callback();
@@ -85,20 +109,20 @@ bot.on('message', (payload, reply) => {
         })
       })
     })
-    // bot.getProfile(payload.sender.id, (err, profile) => {
-    //   if (err) throw err
-
-    //   reply({ text }, (err) => {
-    //     if (err) throw err
-
-    //     console.log(`Echoed back to ${profile.first_name} ${profile.last_name}: ${text}`)
-    //   })
-    // })
   }
 })
 
-function generateResponseFromData(text, callback){
-
+function getSummary(itemPriceList) {
+  var priceSummary = {}
+  for (var i = 0; i < itemPriceList.length; i++) {
+    var assignee = itemPriceList[i]['Assignee']
+    if (assignee in priceSummary) {
+      priceSummary[assignee] = priceSummary[assignee] + itemPriceList[i]['Price']
+    } else {
+      priceSummary[assignee] = itemPriceList[i]['Price']
+    }
+  }
+  return priceSummary
 }
 
 var getBillDynamo = function(id, callback){
@@ -118,6 +142,19 @@ var getBillDynamo = function(id, callback){
     });
 };
 
+var updateListDynamo = function(id, list, callback){
+var options = { method: 'POST',
+  url: 'http://ec2-52-25-176-24.us-west-2.compute.amazonaws.com:3000/changeList',
+  body: { userId: id, list: list},
+  json: true };
+
+  request(options, function (error, response, body) {
+    console.log(body)
+    if (error) throw new Error(error);
+      callback(body);
+  });
+}
+
 var putBillDynamo = function(id, list, callback){
 var options = { method: 'POST',
   url: 'http://ec2-52-25-176-24.us-west-2.compute.amazonaws.com:3000/putBill',
@@ -125,7 +162,7 @@ var options = { method: 'POST',
   json: true };
 
   request(options, function (error, response, body) {
-    console.log(Error)
+    console.log(body)
     if (error) throw new Error(error);
       callback(body);
   });
@@ -134,13 +171,12 @@ var options = { method: 'POST',
 var deleteBillDynamo = function(id, callback){
   var options = { method: 'DELETE',
   url: 'http://ec2-52-25-176-24.us-west-2.compute.amazonaws.com:3000/deleteBill',
-  qs: { userId: 'tester' },
+  qs: { userId: id },
   headers: 
    { 'postman-token': '6c877626-45e8-bb7c-07c8-5cf108cfbdb5',
      'cache-control': 'no-cache',
      'content-type': 'application/json',
      'x-fullcontact-apikey': '583052e807c0615d' },
-  body: { userId: '12345', list: 'dddd' },
   json: true };
 
 request(options, function (error, response, body) {

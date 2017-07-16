@@ -53,4 +53,24 @@ bot.on('message', (payload, reply) => {
   }
 })
 
+var getBillDynamo = function(id){
+    //list should be a JSON structure that you call .toString on
+
+    var options = { method: 'GET',
+        url: 'http://ec2-52-25-176-24.us-west-2.compute.amazonaws.com:3000/getBill',
+        qs: { userId: id },
+        headers:
+            { 'postman-token': '485f8ea8-141c-20e0-ac78-5b0756961f53',
+                'cache-control': 'no-cache',
+                'x-fullcontact-apikey': '583052e807c0615d' } };
+
+    request(options, function (error, response, body) {
+        if (error) throw new Error(error);
+
+        return body;
+    });
+
+
+}
+
 http.createServer(bot.middleware()).listen(443)

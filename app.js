@@ -24,7 +24,7 @@ bot.on('error', (err) => {
 
 bot.on('message', (payload, reply) => {
   var sender = payload['sender']['id']
-  console.log(sender)
+
   if ('attachments' in payload.message) {
     if (payload.message['attachments'][0]['type'] == 'image') {
       var attachment = payload.message.attachments
@@ -46,21 +46,60 @@ bot.on('message', (payload, reply) => {
   }
 
   if ('text' in payload.message) {
-    let text = payload.message.text
-
+    let text = "Hi!"
     //send API call to other service with text and sender
+    // var testlist = [{'Item' : 'tomatoes', 'Price' : 3.00}, {'Item' : 'chicken', 'Price' : 7.00}]
+    // var testjson = JSON.stringify(testlist)
+    // console.log(testlist)
+    getBillDynamo(sender, function(data) {
+      console.log(data)
+      var setSource = function(callback) {
+        if (data == "{}") {
+          text = "Don't have an existing bill? Send a photo to start splitting a bill!"
+        } else {
+          let priceItemData = JSON.parse(data)
+          let index = priceItemData['Item']['listIndex']
+          let priceItemList = JSON.parse(priceItemData['Item']['list'])
 
-    bot.getProfile(payload.sender.id, (err, profile) => {
-      if (err) throw err
+          if (index >= priceItemList.length) {
+            deleteBillDynamo(sender, function(data) {
 
-      reply({ text }, (err) => {
+            })
+            text = "Want to add tip percentage?"
+
+          } else {
+            let itemName = priceItemList[index]["Item"]
+            let price = priceItemList[index]["Price"]
+            text = "Who do you want to assign " + itemName + " of price $" + price + "?"
+            incrementBillDynamo(sender, function(data) {
+              //do nothing
+            })  
+          }   
+        }
+        callback();
+      }
+      setSource(function() {
+        reply({ text }, (err) => {
         if (err) throw err
 
-        console.log(`Echoed back to ${profile.first_name} ${profile.last_name}: ${text}`)
+        })
       })
     })
+    // bot.getProfile(payload.sender.id, (err, profile) => {
+    //   if (err) throw err
+
+    //   reply({ text }, (err) => {
+    //     if (err) throw err
+
+    //     console.log(`Echoed back to ${profile.first_name} ${profile.last_name}: ${text}`)
+    //   })
+    // })
   }
 })
+
+function generateResponseFromData(text, callback){
+
+}
 
 var getBillDynamo = function(id, callback){
     //list should be a JSON structure that you call .toString on
@@ -86,6 +125,7 @@ var options = { method: 'POST',
   json: true };
 
   request(options, function (error, response, body) {
+    console.log(Error)
     if (error) throw new Error(error);
       callback(body);
   });
@@ -129,8 +169,8 @@ request(options, function (error, response, body) {
 
 }
 
-app.listen(process.env.PORT || 3000, process.env.IP || "0.0.0.0", function() {
-  console.log("Server started");
-});
+// app.listen(process.env.PORT || 3000, process.env.IP || "0.0.0.0", function() {
+//   console.log("Server started");
+// });
 
-// http.createServer(bot.middleware()).listen(3000)
+http.createServer(bot.middleware()).listen(3000)

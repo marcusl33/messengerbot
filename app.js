@@ -177,13 +177,15 @@ var updateListDynamo = function(id, list, callback) {
   });
 }
 
-var putBillDynamo = function(id, list, callback) {
+var putBillDynamo = function(id, list, tax, token, callback) {
   var options = {
     method: 'POST',
     url: 'http://ec2-52-25-176-24.us-west-2.compute.amazonaws.com:3000/putBill',
     body: {
       userId: id,
-      list: list
+      list: list,
+      friendToken: token,
+      tax: tax
     },
     json: true
   };

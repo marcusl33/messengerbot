@@ -7,6 +7,8 @@ var app = express();
 var fs = require('fs'),
   request = require('request');
 
+var baseUrl = 'http://ec2-52-25-176-24.us-west-2.compute.amazonaws.com:3000';
+
 app.get('/', (req, res) => {
   deleteBillDynamo("testUserId", function(data) {
     res.send(data);
@@ -142,7 +144,7 @@ var getBillDynamo = function(id, callback) {
 
   var options = {
     method: 'GET',
-    url: 'http://ec2-52-25-176-24.us-west-2.compute.amazonaws.com:3000/getBill',
+    url: baseUrl+'/getBill',
     qs: {
       userId: id
     },
@@ -162,7 +164,7 @@ var getBillDynamo = function(id, callback) {
 var updateListDynamo = function(id, list, callback) {
   var options = {
     method: 'POST',
-    url: 'http://ec2-52-25-176-24.us-west-2.compute.amazonaws.com:3000/changeList',
+    url: baseUrl+'/changeList',
     body: {
       userId: id,
       list: list
@@ -180,7 +182,7 @@ var updateListDynamo = function(id, list, callback) {
 var putBillDynamo = function(id, list, tax, token, callback) {
   var options = {
     method: 'POST',
-    url: 'http://ec2-52-25-176-24.us-west-2.compute.amazonaws.com:3000/putBill',
+    url: baseUrl+'/putBill',
     body: {
       userId: id,
       list: list,
@@ -200,7 +202,7 @@ var putBillDynamo = function(id, list, tax, token, callback) {
 var deleteBillDynamo = function(id, callback) {
   var options = {
     method: 'DELETE',
-    url: 'http://ec2-52-25-176-24.us-west-2.compute.amazonaws.com:3000/deleteBill',
+    url: baseUrl+'/deleteBill',
     qs: {
       userId: id
     },
@@ -223,7 +225,7 @@ var deleteBillDynamo = function(id, callback) {
 var incrementBillDynamo = function(id, callback) {
   var options = {
     method: 'POST',
-    url: 'http://ec2-52-25-176-24.us-west-2.compute.amazonaws.com:3000/incrementBill',
+    url: baseUrl+'/incrementBill',
     headers: {
       'postman-token': '14c37120-f902-e03e-7518-52060dffebfd',
       'cache-control': 'no-cache',
@@ -246,7 +248,7 @@ var incrementBillDynamo = function(id, callback) {
 var getPictureJson = function(url, callback) {
   var options = {
     method: 'POST',
-    url: 'http://ec2-52-25-176-24.us-west-2.compute.amazonaws.com:3000/api/upload',
+    url: baseUrl+'/api/upload',
     headers: {
       'postman-token': '8d92b353-7c9f-991e-3b94-1f70e9847294',
       'cache-control': 'no-cache',
